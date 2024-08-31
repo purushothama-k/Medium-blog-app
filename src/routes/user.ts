@@ -4,8 +4,6 @@ import { withAccelerate } from "@prisma/extension-accelerate";
 import { sign } from "hono/jwt";
 import { signinInput, signupInput } from "@purushothamak269/medium-common";
 
-signinInput;
-
 export const userRouter = new Hono<{
   Bindings: {
     DATABASE_URL: string;
@@ -16,10 +14,6 @@ export const userRouter = new Hono<{
 // SIGNUP
 
 userRouter.post("/signup", async (c) => {
-  const prisma = new PrismaClient({
-    datasourceUrl: c.env?.DATABASE_URL,
-  }).$extends(withAccelerate());
-
   const body = await c.req.json();
 
   const { success } = signupInput.safeParse(body);
@@ -31,10 +25,15 @@ userRouter.post("/signup", async (c) => {
     });
   }
 
+  const prisma = new PrismaClient({
+    datasourceUrl: c.env?.DATABASE_URL,
+  }).$extends(withAccelerate());
+
   try {
     const user = await prisma.user.create({
       data: {
         email: body.email,
+        name: body.name,
         password: body.password,
       },
     });
@@ -48,6 +47,7 @@ userRouter.post("/signup", async (c) => {
       JWT_SECRET_KEY
     );
 
+    console.log(user);
     c.status(200);
     return c.json({
       message: "Token signed successfully",
